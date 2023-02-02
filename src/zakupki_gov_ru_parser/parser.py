@@ -2,6 +2,7 @@ import asyncio
 import json
 import re
 import shelve
+import urllib
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -74,11 +75,11 @@ async def parse_resource():
         dict_links = {}
 
         # fz44
-        temp = await purchases_fz44_parser(target_company)
-        dict_links[target_company] = temp
-        print(dict_links)
-        await get_company_fz44_links(dict_links)
-        dict_links = {}
+        # temp = await purchases_fz44_parser(target_company)
+        # dict_links[target_company] = temp
+        # print(dict_links)
+        # await get_company_fz44_links(dict_links)
+        # dict_links = {}
 
 
 # for fz223 84 - 155 lines
@@ -133,7 +134,8 @@ def get_company_fz223_info(link, company):
 
     company_info_fz223[company]['documents'] = documents
     company_info_fz223[company]['purchase_link'] = link
-    company_info_fz223[company]['document_link'] = check_documents_fz223_link(link)
+    company_info_fz223[company]['document_link'] = get_document_fz223(link)
+    company_info_fz223[company]['document_format'] = get_type_document_fz223(link)
 
     print(company_info_fz223)
 
@@ -202,7 +204,8 @@ def get_company_fz44_info(link, company):
     company_info_fz44[company]['start_price'] = start_price.text.strip().replace("\xa0", ' ') if start_price \
                                                                                                  is not None else None
     company_info_fz44[company]['purchase_link'] = link
-    company_info_fz44[company]['document_link'] = None
+    company_info_fz44[company]['document_link'] = get_document_fz44(link)
+    company_info_fz44[company]['document_format'] = get_type_document_fz44(link)
     company_info_fz44[company]['documents'] = 1 if check_documents_fz44(link) else 0
 
     print(company_info_fz44)
@@ -240,6 +243,22 @@ def document_link_fz44(url):
         return f'https://zakupki.gov.ru/epz/order/notice/ea44/view/documents.html?regNumber={link_id[-1]}'
     elif '/ok20/' in url:
         return f'https://zakupki.gov.ru/epz/order/notice/ok20/view/documents.html?regNumber={link_id[-1]}'
+    elif '/inm111/' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/inm111/view/documents.html?regNumber={link_id[-1]}'
+    elif '/ep44/' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/ep44/view/documents.html?regNumber={link_id[-1]}'
+    elif '/ok504' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/ok504/view/documents.html?regNumber={link_id[-1]}'
+    elif '/zk44/' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/zk44/view/documents.html?regNumber={link_id[-1]}'
+    elif '/ok44/' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/ok44/view/documents.html?regNumber={link_id[-1]}'
+    elif '/oku44/' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/oku44/view/documents.html?regNumber={link_id[-1]}'
+    elif '/za20/' in url:
+        return f'https://zakupki.gov.ru/epz/order/notice/za20/view/documents.html?regNumber={link_id[-1]}'
+
+
 
 
 def check_documents_fz44(url):
@@ -252,18 +271,123 @@ def check_documents_fz44(url):
 
 
 def get_document_fz44(url):
-    pass
-
-
-def get_document_fz223(url):
-    pass
+    link = document_link_fz44(url)
+    req = requests.get(link, headers=headers)
+    src = req.text
+    soup = BeautifulSoup(src, "lxml")
+    document_dict = {}
+    count = 1
+    docs_list = soup.find_all("span", class_="section__value")
+    for i in docs_list:
+        document_dict[count] = i.find_next().get("href")
+        count += 1
+    return document_dict
 
 
 def get_type_document_fz44(url):
-    pass
+    link = document_link_fz44(url)
+    req = requests.get(link, headers=headers)
+    src = req.text
+    soup = BeautifulSoup(src, "lxml")
+    type_dict = {}
+    count = 1
+    docs_list = soup.find_all("span", class_="section__value")
+    for i in docs_list:
+        temp = i.find_next().get("title")
+        if '.docx' in temp or '.doc' in temp:
+            type_dict[count] = "docx"
+            count += 1
+        elif '.rtf' in temp:
+            type_dict[count] = "rtf"
+            count += 1
+        elif '.pdf' in temp:
+            type_dict[count] = "pdf"
+            count += 1
+        elif '.zip' in temp:
+            type_dict[count] = "zip"
+            count += 1
+        elif '.rar' in temp:
+            type_dict[count] = "rar"
+            count += 1
+        elif '.7z' in temp:
+            type_dict[count] = "7z"
+            count += 1
+        elif '.html' in temp:
+            type_dict[count] = "html"
+            count += 1
+        elif '.excel' in temp:
+            type_dict[count] = "excel"
+            count += 1
+        elif '.csv' in temp:
+            type_dict[count] = "csv"
+            count += 1
+        elif '.xls' in temp:
+            type_dict[count] = "xls"
+            count += 1
+        elif '.xlsx' in temp:
+            type_dict[count] = "xlsx"
+            count += 1
+    return type_dict
+
+
+def get_document_fz223(url):
+    link = check_documents_fz223_link(url)
+    req = requests.get(link, headers=headers)
+    src = req.text
+    soup = BeautifulSoup(src, "lxml")
+    document_dict = {}
+    count = 1
+    docs_list = soup.find_all("span", class_="count")
+    for i in docs_list:
+        document_dict[count] = "https://zakupki.gov.ru" + i.find_next().find_next().find_next().find_next().get("href")
+        count += 1
+    return document_dict
 
 
 def get_type_document_fz223(url):
-    pass
+    link = check_documents_fz223_link(url)
+    req = requests.get(link, headers=headers)
+    src = req.text
+    soup = BeautifulSoup(src, "lxml")
+    type_dict = {}
+
+    count = 1
+    docs_list = soup.find_all("img", class_="vAlignMiddle margRight5")
+    for i in docs_list:
+        temp = i.find_next().text.strip()
+        if '.docx' in temp:
+            type_dict[count] = "docx"
+            count += 1
+        elif '.rtf' in temp:
+            type_dict[count] = "rtf"
+            count += 1
+        elif '.pdf' in temp:
+            type_dict[count] = "pdf"
+            count += 1
+        elif '.zip' in temp:
+            type_dict[count] = "zip"
+            count += 1
+        elif '.rar' in temp:
+            type_dict[count] = "rar"
+            count += 1
+        elif '.7z' in temp:
+            type_dict[count] = "7z"
+            count += 1
+        elif '.html' in temp:
+            type_dict[count] = "html"
+            count += 1
+        elif '.excel' in temp:
+            type_dict[count] = "excel"
+            count += 1
+        elif '.csv' in temp:
+            type_dict[count] = "csv"
+            count += 1
+        elif '.xls' in temp:
+            type_dict[count] = "xls"
+            count += 1
+        elif '.xlsx' in temp:
+            type_dict[count] = "xlsx"
+            count += 1
+    return type_dict
 
 
