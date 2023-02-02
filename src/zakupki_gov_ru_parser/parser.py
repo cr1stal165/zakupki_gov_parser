@@ -68,18 +68,18 @@ async def parse_resource():
         target_company = companies.pop()
         # fz223
 
-        temp = await purchases_fz223_parser(target_company)
-        dict_links[target_company] = temp
-        print(dict_links)
-        await get_company_fz223_links(dict_links)
-        dict_links = {}
-
-        # fz44
-        # temp = await purchases_fz44_parser(target_company)
+        # temp = await purchases_fz223_parser(target_company)
         # dict_links[target_company] = temp
         # print(dict_links)
-        # await get_company_fz44_links(dict_links)
+        # await get_company_fz223_links(dict_links)
         # dict_links = {}
+
+        # fz44
+        temp = await purchases_fz44_parser(target_company)
+        dict_links[target_company] = temp
+        print(dict_links)
+        await get_company_fz44_links(dict_links)
+        dict_links = {}
 
 
 # for fz223 84 - 155 lines
@@ -234,31 +234,7 @@ def find_inn_fz44(link):
 
 
 def document_link_fz44(url):
-    link_id = re.findall(r'\d+', url)
-    if '/ea20/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/ea20/view/documents.html?regNumber={link_id[-1]}'
-    elif '/zk20/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/zk20/view/documents.html?regNumber={link_id[-1]}'
-    elif '/ea44/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/ea44/view/documents.html?regNumber={link_id[-1]}'
-    elif '/ok20/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/ok20/view/documents.html?regNumber={link_id[-1]}'
-    elif '/inm111/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/inm111/view/documents.html?regNumber={link_id[-1]}'
-    elif '/ep44/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/ep44/view/documents.html?regNumber={link_id[-1]}'
-    elif '/ok504' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/ok504/view/documents.html?regNumber={link_id[-1]}'
-    elif '/zk44/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/zk44/view/documents.html?regNumber={link_id[-1]}'
-    elif '/ok44/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/ok44/view/documents.html?regNumber={link_id[-1]}'
-    elif '/oku44/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/oku44/view/documents.html?regNumber={link_id[-1]}'
-    elif '/za20/' in url:
-        return f'https://zakupki.gov.ru/epz/order/notice/za20/view/documents.html?regNumber={link_id[-1]}'
-
-
+    return url.replace("common-info", "documents")
 
 
 def check_documents_fz44(url):
