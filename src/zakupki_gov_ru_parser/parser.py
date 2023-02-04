@@ -169,7 +169,6 @@ async def get_company_fz44_links(dict_company):
                         pass
                         get_company_fz44_info(i, key)
 
-
 def get_company_fz44_info(link, company):
     req = requests.get(link, headers=headers)
     src = req.text

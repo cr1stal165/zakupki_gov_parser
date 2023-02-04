@@ -3,6 +3,10 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     companies_list: str
+    minio_host: str
+    minio_port: str
+    minio_access_key: str
+    minio_secret_key: str
 
     # base_proxy: str
 
